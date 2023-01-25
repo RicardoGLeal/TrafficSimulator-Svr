@@ -257,12 +257,13 @@ class TrafficSimulator(Model):
         """Advance the model by one step."""
         # print(f'Iteracion {self.num}')
         
+        self.ticks_left -= 1
         #Actualizar Semaforos
         if not self.ticks_left:
             self.ticks_left = self.numberOfTicks
             self.current_semaphore += 1
-            self.current_semaphore %= 4
-            
+            if self.current_semaphore == 4:
+                self.current_semaphore = 0
         self.num += 1
         self.datacollector.collect(self)
         
