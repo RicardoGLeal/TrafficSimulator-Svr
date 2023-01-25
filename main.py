@@ -21,18 +21,14 @@ import os
 import pandas as pd
 
 # Import MAS module
-from simulacion import CruceroModel
+from trafficSimulator import TrafficSimulator
 
 # Invoke model
 mapa = pd.read_csv("grafo.csv", header= None).values
+semaphore_ticks = 15
+new_model = TrafficSimulator(*mapa.shape, number_of_agents = 15, ticks = semaphore_ticks)
+data = new_model.datacollector.get_model_vars_dataframe()
 
-model = CruceroModel(*mapa.shape)
-# Iterations = 40
-
-# for i in range(Iterations):
-#   model.step()
-
-data = model.datacollector.get_model_vars_dataframe()
 #print(data.to_string())
 
 
@@ -49,12 +45,15 @@ data = model.datacollector.get_model_vars_dataframe()
 # HTML(anim.to_jshtml())
 # while((time.time() - start_time) < tiempo_maximo and not model.todoLimpio()):
 
-def features(data):
+def getFeaturesVehiculos(data):
     features = []
     for elem in data:
         # import pdb; pdb.set_trace()
         feature = {'carroID' : elem['carroID'], 'wayPointID' : elem['wayPointID']}
+        #feature2 = {'semaforoEncendido' : elem['semaforoEncendido']}
         features.append(feature)
+        #features.append(feature2)
+
     return json.dumps(features)
 
 class Server(BaseHTTPRequestHandler):
@@ -68,10 +67,12 @@ class Server(BaseHTTPRequestHandler):
         logging.info("GET request,\nPath: %s\nHeaders:\n%s\n", 
                      str(self.path), str(self.headers))
         self._set_response()
-        model.step()
-        data = model.status_agentes()
+
+        new_model.step()
+        vehiculosData = new_model.status_agentes()
+
         # obtener los datos del modelo...
-        resp = "{\"data\":" + features(data) + "}"
+        resp = "{\"data\":" + "{\"vehiculos\":" + getFeaturesVehiculos(vehiculosData) + "}," + "\"semaforos\":" + str(new_model.get_status_lights()) + "}"
         self.wfile.write(resp.encode('utf-8'))
 
     def do_POST(self):
