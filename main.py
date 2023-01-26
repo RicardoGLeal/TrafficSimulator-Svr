@@ -25,7 +25,7 @@ from trafficSimulator import TrafficSimulator
 
 # Invoke model
 mapa = pd.read_csv("grafo.csv", header= None).values
-semaphore_ticks = 15
+semaphore_ticks = 20
 new_model = TrafficSimulator(*mapa.shape, number_of_agents = 14, ticks = semaphore_ticks)
 data = new_model.datacollector.get_model_vars_dataframe()
 
