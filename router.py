@@ -55,7 +55,6 @@ class Router:
         return 
     
     def findLaneFromCoordinates(self, coordinates):
-
         for key, element in self.conexiones.items():
             start_x, end_x, start_y, end_y = element["start_x"], element["end_x"], element["start_y"], element["end_y"]
             
