@@ -26,7 +26,7 @@ from trafficSimulator import TrafficSimulator
 # Invoke model
 mapa = pd.read_csv("grafo.csv", header= None).values
 semaphore_ticks = 15
-new_model = TrafficSimulator(*mapa.shape, number_of_agents = 15, ticks = semaphore_ticks)
+new_model = TrafficSimulator(*mapa.shape, number_of_agents = 10, ticks = semaphore_ticks)
 data = new_model.datacollector.get_model_vars_dataframe()
 
 #print(data.to_string())
@@ -73,6 +73,7 @@ class Server(BaseHTTPRequestHandler):
 
         # obtener los datos del modelo...
         resp = "{\"data\":" + "{\"vehiculos\":" + getFeaturesVehiculos(vehiculosData) + "}," + "\"semaforos\":" + str(new_model.get_status_lights()) + "}"
+        logging.info(resp)
         self.wfile.write(resp.encode('utf-8'))
 
     def do_POST(self):

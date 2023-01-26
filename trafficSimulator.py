@@ -8,6 +8,7 @@ import itertools
 import numpy as np
 from random import randint
 from utils import conexiones, mapa
+import logging
 
 
 def getStatusGrid(model):
@@ -22,15 +23,16 @@ class CarAgent(Agent):
     """An agent"""
     def __init__(self, unique_id, model, final_destination):
         super().__init__(unique_id, model)
-
+        self.temp_id = unique_id
         self.state = 0
-        print("Routing, ", list(reversed(unique_id)), final_destination)
+        #print("Routing, ", list(reversed(unique_id)), final_destination)
         
         self.router = Router(list(reversed(unique_id)), final_destination, conexiones, mapa)
         self.route = self.router.findConnection()
         self.route_available = self.route is not None
         if self.route_available:
-            print("Start : ", self.router.current_lane, ", End :", self.router.destination)
+            pass
+            #print("Start : ", self.router.current_lane, ", End :", self.router.destination)
         self.next_step = 0
         self.final_destination = final_destination
 
@@ -58,6 +60,10 @@ class CarAgent(Agent):
                 start_pos, end_pos = self.model.moveCarToStart()
                 self.resetRouter(start_pos, end_pos)
                 self.move(tuple(reversed(start_pos)))
+                self.temp_id = (self.temp_id[0] * -1, self.temp_id[1] * -1)
+                #logging.basicConfig(level=logging.INFO)
+                #logging.info("StartPos: ", 21 * start_pos[1] + start_pos[0], "ID: ", self.unique_id)
+                #input("continue")
 
     def resetRouter(self, current_position, destination_position):
         self.state = 0
@@ -67,7 +73,8 @@ class CarAgent(Agent):
 
         self.route_available = self.route is not None
         if self.route_available:
-            print("New Start : ", self.router.current_lane, ", New End :", self.router.destination)
+            pass
+            # print("New Start : ", self.router.current_lane, ", New End :", self.router.destination)
         self.next_step = 0
 
         self.final_destination = destination_position
@@ -77,8 +84,8 @@ class CarAgent(Agent):
         target = self.convertCoords(self.router.target_position)
 
         if (self.current_position == target).all():
-            print("UUID : ", self.unique_id, "Is in state 1" )
-            print(self.router.target_intersection, self.current_position)
+            ##print("UUID : ", self.unique_id, "Is in state 1" )
+            ##print(self.router.target_intersection, self.current_position)
             self.state = 1
             return 
 
@@ -236,11 +243,11 @@ class TrafficSimulator(Model):
             while True:
                 start, end = (self.generateCoordsForCar())
                 if tuple(start) not in seen:
-                    print("Coords: ",start, end)
+                    #print("Coords: ",start, end)
                     seen.add(tuple(start))
                     break
                 
-            print("Adding", start, end)
+            #print("Adding", start, end)
             a = CarAgent(tuple(reversed(start)), self, end)
             self.schedule.add(a)
             self.grid.place_agent(a, tuple(reversed(start)))
@@ -255,15 +262,14 @@ class TrafficSimulator(Model):
     """
     def step(self):
         """Advance the model by one step."""
-        # print(f'Iteracion {self.num}')
+        # #print(f'Iteracion {self.num}')
         
         self.ticks_left -= 1
         #Actualizar Semaforos
-        if not self.ticks_left:
+        if self.ticks_left == -1:
             self.ticks_left = self.numberOfTicks
             self.current_semaphore += 1
-            if self.current_semaphore == 4:
-                self.current_semaphore = 0
+            self.current_semaphore %= 4
         self.num += 1
         self.datacollector.collect(self)
         
@@ -348,7 +354,7 @@ class TrafficSimulator(Model):
         for (content, x, y) in model.grid.coord_iter():
             for elem in content:
                 if isinstance(elem, CarAgent) and not (x==0 and y ==0):
-                    data.append({'carroID': elem.unique_id, 'wayPointID': 21 * x + y})
+                    data.append({'carroID': elem.temp_id, 'wayPointID': 21 * x + y})
         return data
 
     def get_status_lights(model):
