@@ -1,15 +1,11 @@
 from router import Router
 from mesa import Agent, Model
 from mesa.time import SimultaneousActivation
-from mesa.space import SingleGrid, MultiGrid
+from mesa.space import MultiGrid
 from mesa.datacollection import DataCollector
 import random
-import itertools
 import numpy as np
-from random import randint
 from utils import conexiones, mapa
-import logging
-
 
 def getStatusGrid(model):
     result = mapa.copy()
@@ -24,25 +20,15 @@ class CarAgent(Agent):
     def __init__(self, unique_id, model, final_destination):
         super().__init__(unique_id, model)
         self.temp_id = unique_id
-        self.state = 0
-        #print("Routing, ", list(reversed(unique_id)), final_destination)
-        
+        self.state = 0        
         self.router = Router(list(reversed(unique_id)), final_destination, conexiones, mapa)
         self.route = self.router.findConnection()
         self.route_available = self.route is not None
-        if self.route_available:
-            pass
-            #print("Start : ", self.router.current_lane, ", End :", self.router.destination)
         self.next_step = 0
         self.final_destination = final_destination
 
     def step(self):
         if self.route_available:
-            # neighbors = self.model.grid.get_neighborhood(
-            #     (self.pos),
-            #     moore=True,
-            #     include_center=False
-            # )
             self.current_position = np.array(self.pos)
 
             """
@@ -61,9 +47,6 @@ class CarAgent(Agent):
                 self.resetRouter(start_pos, end_pos)
                 self.move(tuple(reversed(start_pos)))
                 self.temp_id = (self.temp_id[0] * -1, self.temp_id[1] * -1)
-                #logging.basicConfig(level=logging.INFO)
-                #logging.info("StartPos: ", 21 * start_pos[1] + start_pos[0], "ID: ", self.unique_id)
-                #input("continue")
 
     def resetRouter(self, current_position, destination_position):
         self.state = 0
@@ -72,9 +55,6 @@ class CarAgent(Agent):
         self.route = self.router.findConnection()
 
         self.route_available = self.route is not None
-        if self.route_available:
-            pass
-            # print("New Start : ", self.router.current_lane, ", New End :", self.router.destination)
         self.next_step = 0
 
         self.final_destination = destination_position
@@ -84,8 +64,6 @@ class CarAgent(Agent):
         target = self.convertCoords(self.router.target_position)
 
         if (self.current_position == target).all():
-            ##print("UUID : ", self.unique_id, "Is in state 1" )
-            ##print(self.router.target_intersection, self.current_position)
             self.state = 1
             return 
 
@@ -203,12 +181,6 @@ class CarAgent(Agent):
             Si la diferencia de coordenadas es menor al numero de ticks restantes
             significa que el carro va a terminar en la linea direccion destino 
             sin riesgo a que le choquen (puede verse como semaforo en amarillo) 
-            
-            self.current_position = current_position
-            self.destination_position = destination_position
-
-            self.current_lane = self.findLaneFromCoordinates(current_position)
-            self.destination = self.findLaneFromCoordinates(destination_position)
             """
             # TODO
             self.state = 2
@@ -243,11 +215,9 @@ class TrafficSimulator(Model):
             while True:
                 start, end = (self.generateCoordsForCar())
                 if tuple(start) not in seen:
-                    #print("Coords: ",start, end)
                     seen.add(tuple(start))
                     break
                 
-            #print("Adding", start, end)
             a = CarAgent(tuple(reversed(start)), self, end)
             self.schedule.add(a)
             self.grid.place_agent(a, tuple(reversed(start)))
@@ -262,7 +232,6 @@ class TrafficSimulator(Model):
     """
     def step(self):
         """Advance the model by one step."""
-        # #print(f'Iteracion {self.num}')
         
         self.ticks_left -= 1
         #Actualizar Semaforos
@@ -359,4 +328,3 @@ class TrafficSimulator(Model):
 
     def get_status_lights(model):
         return model.current_semaphore
-
