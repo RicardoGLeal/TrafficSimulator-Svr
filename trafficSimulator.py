@@ -15,6 +15,19 @@ def getStatusGrid(model):
                 result[x][y] = 8
     return result
 
+class TrafficLightAgent(Agent):
+    """An agent"""
+    def _init_(self, unique_id, model):
+        super()._init_(unique_id, model)
+
+    def step(self):
+        self.model.ticks_left-=1
+        if(self.model.ticks_left == -1):
+            self.model.ticks_left = self.model.number_of_ticks
+            self.model.current_semaphore += 1
+            #Si ya se sale de los 4 cuadrantes posibles el indice de semaforo
+            self.model.current_semaphore%=4
+
 class CarAgent(Agent):
     """An agent"""
     def __init__(self, unique_id, model, final_destination):
@@ -202,7 +215,7 @@ class TrafficSimulator(Model):
         self.grid = MultiGrid(N, M, False)
         self.schedule = SimultaneousActivation(self)
         self.start_sections = start_sections
-        self.numberOfTicks = ticks
+        self.number_of_ticks = ticks
         self.ticks_left = ticks
         self.current_semaphore = self.random.randint(0, 3)
         self.semaphores = ["AR","BR","CR","DR"]
@@ -221,7 +234,8 @@ class TrafficSimulator(Model):
             a = CarAgent(tuple(reversed(start)), self, end)
             self.schedule.add(a)
             self.grid.place_agent(a, tuple(reversed(start)))
-
+        traffic_light_agent = TrafficLightAgent("TrafficLightAgent", self)
+        self.schedule.add(traffic_light_agent)
         self.datacollector = DataCollector(
             model_reporters={"Grid": getStatusGrid}
         )
@@ -233,12 +247,6 @@ class TrafficSimulator(Model):
     def step(self):
         """Advance the model by one step."""
         
-        self.ticks_left -= 1
-        #Actualizar Semaforos
-        if self.ticks_left == -1:
-            self.ticks_left = self.numberOfTicks
-            self.current_semaphore += 1
-            self.current_semaphore %= 4
         self.num += 1
         self.datacollector.collect(self)
         
